@@ -9,6 +9,7 @@
 #define H 0x4
 #define L 0x5
 
+#define HL
 //========LD 8b INSTRUCTIONS==========
 //TODO decide a naming conventions
 
@@ -25,7 +26,7 @@
 //TODO
 //(Note) should put all this in main header?
 //Aliases
-typedef sm83_instruction Instr;
+typedef sm83_instruction Instruction;
 typedef sm83_cpu Cpu;
 
 //=======Inline Functions==========
@@ -43,49 +44,52 @@ typedef sm83_cpu Cpu;
  * Add set of functions to interact bw cpu and state
  */
 
-//TODO add to other general header
-//this would be the api
-//(NOTE) bad because never any error checks
-
-#define INCCOUNTER() \
-s->cpu->pc = s->cpu->pc + i->len; \
-++s->tcp
-
-#define ADD_INSTRUCTION_INFO(len, type) \
-		i->op	 = s->cpu->ir;\
-		i->len   = (len);\
-		i->type  = (type)
-
-#define READ_IMMEDIATE_8b() \
-		s->memory[s->pc + 1];
 
 int sm83ldrr(State *s) {
 		//BYTE opcode = s->cpu->ir;  //fist instruction
-		Instr *i = s->code[s->tpc];
-
+		Instruction *i = NextInstruction();
 		ADD_INSTRUCTION_INFO(1, 0);
-		i->flags = 0;
+		INSTRUCTION_SETFLAGS(0);
 
-		i->op1 = (OP&0x38) >>3; //takes two register ids
-		i->op2 = OP&0x07;
+		i->op1 = GETr(i->op);
+		i->op2 = GETrr(i->op);
 
-		INCCOUNTER();
 		return 0;
 }
 
 int sm83ldrn(State *s) {
-		Instr *i = s->code[s->tpc];
-		ADD_INSTRUCTION_INFO(1, 0)
+		Instruction *i = NextInstruction();
 
-		BYTE flags = 0;
-		//TODO change naming
-		i->flags += ld8b-flags.IMM;
+		//TODO should immediate instruction be 2 bytes long?
+		ADD_INSTRUCTION_INFO(2, 0)
+		INSTRUCTION_SETFLAGS(0);
 
 		//i would need to fetch again here
 		i->op1 = (OP&0x38) >>3; //takes two register ids
-		i->op2 = READ_IMMEDIATE_8b();
-		ASSERT(1); //TODO testing needed, is stored high[7 0] or low[2 0]
+		i->op2 = ReadByteFromMemory(addr);
 
+		ASSERT(1); //TODO testing needed, is stored high[7 0] or low[2 0]
+		return 0;
+}
+
+int sm83ldrhl(State *s) {
+		Instruction *i = NextInstruction();
+
+		ADD_INSTRUCTION_INFO(1, 0);
+		INSTRUCTION_SETFLAGS(0);
+
+		i->op1 = (i->op&0x38) >>3; //takes two register ids
+		i->op2 = HL;
+
+		ASSERT(1);
+		return 0;
+}
+int sm83lhlr(State *s) {
+		Instruction i = NextInstruction();
+		ADD_INSTRUCTION_INFO(1, 0);
+		INSTRUCTION_SETFLAGS(0);
+
+		ASSERT(1);
 		return 0;
 }
 

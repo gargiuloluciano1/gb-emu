@@ -15,10 +15,12 @@ sm83_instruction ldrhl() {
 		BYTE flags = ld8b-flags.DEREF2; //needs to be read as a pointer
 }
 #endif
+
 //TODO put everything in a global namespace
 //======First Stage Interpretation======
 
 
+typedef sm83_instruction Instruction;
 int main(int argc, char** argv) {
 		if (argc < 1) {
 				fprintf(stderr, "Not enough args\n");
@@ -30,6 +32,12 @@ int main(int argc, char** argv) {
 		while(read(fd, op, sizeof(op)) > 0) {
 				if (is_prefix(op)) { //call other routine
 				}
+
+				table[op].routine(); //in fetching alway increase CODE[] table
+									   //always know where next one is
+
+				s->spc+=i->len; //(NOTE) might not be always correct
+				++s->tcp;
 		}
 		return 0;
 }

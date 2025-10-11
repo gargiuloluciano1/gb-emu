@@ -84,11 +84,39 @@ typedef struct {
 	//interpreter
 		//TODO for now is static and only 128 for testing
 	sm83_instruction code[128];
-	BYTE tpc;
+	BYTE icount; //instruction fetched
+	BYTE tpc; //pointer can also move back
+			  
 	//cpu area
 	sm83_cpu cpu;
 	//memory space 
 } State;
 
+
+//======State API===========
+
+//TODO rename this
+
+#define GetInstruction(i) i >0 && i < s->icount && ? s->code + i : 0
+
+#define NextInstruction() s->code[s->tpc];
+#define GetRegisterPointer  (r) r > 0 && r < 7? s->cpu.r8  + r : 0
+#define GetRegisterPointer16(r) s->cpu.r16 + r;
+
+#define ReadByteFromMemory(addr) s->M[addr]
+
+//=======Instructions API=======
+//TODO need better names for this
+#define GETr(op)  op&0x38 >>3
+#define GETrr(op) op&x07
+
+//TODO look into variadic
+#define INSTRUCTION_SETFLAGS(flags) \
+		i->flags=(flags);
+
+#define ADD_INSTRUCTION_INFO(len, type) \
+		i->op	 = s->cpu->ir;\
+		i->len   = (len);\
+		i->type  = (type)
 #endif
 
