@@ -31,19 +31,49 @@ if (exp) {\
 // where x=1
 // y = ^IMM
 // cde = 010b is special mode for interpretation, means y = 1
+//not mutually exclusive
 typedef enum {
-		IMM =0x80, //0x 01000000b
-		DEREF1= 0x40, //needs to be read as a pointer
-		DEREF2= 0x20, //needs to be read as a pointer
-} SM83_LD8B_FLAGS;
+		direct = 0,   //data inside register, is index
+		indirect = 2, //*p
+		index = 4 	  // C + FF00H
+} AccessType;
+
+typedef struct {
+		BYTE type; //immediate or not
+		BYTE access;
+		HWORD d;
+} Operand;
+
+typedef enum {
+		load;
+} InstructionType;
+
+//
+// 7 6 5 4 3 2 1
+// - - 1 D - 1 D
+//
+//  5 '1' INC/DEC opeartion for rd
+//  3 '1' INC/DEC operation for m
+//  D '0' INC by 1
+
+typedef enum {
+		INC_RD = 0x20,
+		DEC_RD = 0x30,
+		INC_M  = 0x02,
+		DEC_M  = 0x03
+} InstructionFlags;
 
 typedef struct {
 	BYTE op;
 	BYTE len; // one to three, useful for spc to tpc
-	BYTE type; //example arithmetic only differ for flags set
-	BYTE flags;
-	HWORD r1;
-	HWORD r2;
+
+	InstructionType type;
+
+	BYTE flags; //0000 0000
+
+	Operand rd;
+	Operand m;
+
 	void* dispatch;
 } sm83_instruction;
 
@@ -104,6 +134,8 @@ typedef struct {
 #define GetRegisterPointer16(r) s->cpu.r16 + r;
 
 #define ReadByteFromMemory(addr) s->M[addr]
+#define ReadNextByteFromMemory() s->M[s->cpu->pc+1]
+#define ReadNextHWordFromMemory() ((s->M[s->cpu->pc+1])<<4) |(s->M[s->cpu->pc+2])
 
 //=======Instructions API=======
 //TODO need better names for this
@@ -118,5 +150,9 @@ typedef struct {
 		i->op	 = s->cpu->ir;\
 		i->len   = (len);\
 		i->type  = (type)
+
+#define OperandSet(r, immediate, flags) \
+		(Operand){r, immediate, flags}
+
 #endif
 

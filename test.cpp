@@ -1,23 +1,32 @@
+#include <stdio.h>
 #include <stdint.h>
 typedef uint8_t BYTE;
 
-typedef struct { 
-		union {
-				BYTE a[7];
-				struct {
-						BYTE x1;
-						BYTE x2;
-						BYTE x3;
-						BYTE x4;
-						BYTE x5;
-						BYTE x6;
-						BYTE x7;
-						BYTE x8;
-				};
-		};
-} A;
+typedef enum {
+		on = 1,
+		off = 2,
+		help = 4,
+} Flags;
 
-A a;
+typedef struct {
+		int d;
+		int flags;
+} Operand;
+
+#define SETFLAGS(flags) flags
+
+int d[] = {0x03, 0x40, 0x80 ,0x40};
+int i = 1;
+#define ReadNextByteFromMemory()  d[i+1]
+#define ReadNextHByteFromMemory() d[i+1]<<4 | d[i+2]
+
+#define OperandSet(r, flags) \
+		{r, flags}
+
 int main() {
+		int x = 100;
+		int y = Flags.help
+		//Operand y = OperandSet(ReadNextHByteFromMemory(), on | Flags.help); //101
+		printf("%d\n", y);
 		return 0;
 }
