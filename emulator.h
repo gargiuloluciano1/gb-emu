@@ -114,18 +114,26 @@ typedef struct {
 	//interpreter
 		//TODO for now is static and only 128 for testing
 	sm83_instruction code[128];
-	BYTE icount; //instruction fetched
-	BYTE tpc; //pointer can also move back
+	BYTE tpc;
+	BYTE spc;
+	BYTE icount;
 			  
 	//cpu area
 	sm83_cpu cpu;
 	//memory space 
 } State;
 
-
 //======State API===========
-
 //TODO rename this
+
+/*
+ * If i keep this i would have to recompile the isa src
+ * everytime i change these functions
+ * Also harder to debug more error prone
+ *
+ * But ig faster in execution
+ *
+ */
 
 #define GetInstruction(i) i >0 && i < s->icount && ? s->code + i : 0
 
@@ -135,7 +143,7 @@ typedef struct {
 
 #define ReadByteFromMemory(addr) s->M[addr]
 #define ReadNextByteFromMemory() s->M[s->cpu->pc+1]
-#define ReadNextHWordFromMemory() ((s->M[s->cpu->pc+1])<<4) |(s->M[s->cpu->pc+2])
+#define ReadNextHWordFromMemory() ((s->M[s->cpu->pc+1])<<4) | (s->M[s->cpu->pc+2])
 
 //=======Instructions API=======
 //TODO need better names for this
