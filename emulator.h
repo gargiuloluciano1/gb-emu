@@ -45,7 +45,10 @@ typedef struct {
 } Operand;
 
 typedef enum {
-		load;
+	IO,
+	IO_16,
+	ALU,
+	SRT
 } InstructionType;
 
 //
@@ -56,12 +59,43 @@ typedef enum {
 //  3 '1' INC/DEC operation for m
 //  D '0' INC by 1
 
+//TODO change only for IO 8 bit operations
 typedef enum {
 		INC_RD = 0x20,
 		DEC_RD = 0x30,
 		INC_M  = 0x02,
 		DEC_M  = 0x03
 } InstructionFlags;
+
+typedef enum {
+    		POP = 0x1,
+    		PUSH= 0x10,
+		LDHL= 0x100 //sum hl <- (sp + e) e is signed
+
+} Io16Flags;
+
+//TODO assign more meaningful values
+typedef enum {
+    		ADD= 0x0,
+    		SUB= 0x1,
+		ADC= 0x2, //sum hl <- (sp + e) e is signed
+		AND= 0x3,
+		OR = 0x4,
+		XOR= 0x5,
+		CP = 0x6,
+		SBC= 0x7,
+		INC= 0x8,
+		DEC= 0x9
+
+} AluFlags;
+
+typedef enum {
+    		RLCA=0x0,
+		RLA =0x1,
+		RRCA=0x2,
+		RRA =0x3,
+		RLC =0x4
+} SRTFlags;
 
 typedef struct {
 	BYTE op;
@@ -105,6 +139,7 @@ typedef struct {
 						HWORD PC;
 				};
 		};
+		BYTE ir;
 		//TODO
 		// internal ram area (like cache)
 
@@ -120,6 +155,7 @@ typedef struct {
 	//cpu area
 	sm83_cpu cpu;
 	//memory space 
+	BYTE M[1024]; //TODO just for moment
 } State;
 
 
@@ -129,27 +165,30 @@ typedef struct {
 
 #define GetInstruction(i) i >0 && i < s->icount && ? s->code + i : 0
 
-#define NextInstruction() s->code[s->tpc];
+#define NextInstruction() s->code+s->tpc;
 #define GetRegisterPointer  (r) r > 0 && r < 7? s->cpu.r8  + r : 0
 #define GetRegisterPointer16(r) s->cpu.r16 + r;
 
 #define ReadByteFromMemory(addr) s->M[addr]
-#define ReadNextByteFromMemory() s->M[s->cpu->pc+1]
-#define ReadNextHWordFromMemory() ((s->M[s->cpu->pc+1])<<4) |(s->M[s->cpu->pc+2])
+#define ReadNextByteFromMemory() s->M[s->cpu.PC+1]
+//little endian
+#define ReadNextHWordFromMemory() ((s->M[s->cpu.PC+1])<<4) |(s->M[s->cpu.pc+2])
 
 //=======Instructions API=======
 //TODO need better names for this
+//16 ld not ok
 #define GETr(op)  op&0x38 >>3
-#define GETrr(op) op&x07
+#define GETrr(op) op&0x7
+#define GETdd(op) op&0xC0 >>6
 
 //TODO look into variadic
-#define INSTRUCTION_SETFLAGS(flags) \
-		i->flags=(flags);
+#define INSTRUCTION_SET_FLAGS(f) \
+		i->flags=(f);
 
-#define ADD_INSTRUCTION_INFO(len, type) \
-		i->op	 = s->cpu->ir;\
-		i->len   = (len);\
-		i->type  = (type)
+#define INSTRUCTION_SET_INFO(l, t) \
+		i->op	 = s->cpu.ir;\
+		i->len   = (l);\
+		i->type  = (t)
 
 #define OperandSet(r, immediate, flags) \
 		(Operand){r, immediate, flags}

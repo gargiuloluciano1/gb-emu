@@ -11,3 +11,5 @@ Should Name for Instruction just be the opcode? or keep a sort of mnemonics synt
 # Fetching Instructions for Operands in I/O
 
 Important, instructions like ld a, nn put the next two byte in little or big endian? need to check
+
+Rewrite all functions usign preprocessor? Instead of assigning 1:n for routines might just make every function and "automate" it with preprocessor?
