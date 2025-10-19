@@ -2,25 +2,31 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
+
 #include "emulator.h"
 
 //TODO make a header only for definitions
-#if 0
-sm83_instruction ldrhl() {
-		BYTE op = OP;
-		BYTE len = 1;
-		BYTE type = sm83_instruction-type.LD8b;
 
-		BYTE flags = 0;
-		BYTE flags = ld8b-flags.DEREF2; //needs to be read as a pointer
-}
-#endif
+
 
 //TODO put everything in a global namespace
-//======First Stage Interpretation======
 
+//======First Stage Interpretation======
+//All routines are added in this table
+
+State *s;
+s->tpc   =0;
+s->spc   =0;
+s->icount=0;
+
+sm83_instruction routine[] = 
+{ 
+};
 
 typedef sm83_instruction Instruction;
+
+
+
 int main(int argc, char** argv) {
 		if (argc < 1) {
 				fprintf(stderr, "Not enough args\n");
@@ -28,16 +34,22 @@ int main(int argc, char** argv) {
 		}
 		//TODO needs further error checking
 		int fd = open(argv[1], O_RDONLY);
+		if (fd < 0) {
+				fprint(stderr, "Fd was negative\n");
+				return 1;
+		}
 
-		while(read(fd, op, sizeof(op)) > 0) {
+		while(read(fd, op, sizeof(op)) > 0 ) {
 				if (is_prefix(op)) { //call other routine
 				}
 
-				table[op].routine(); //in fetching alway increase CODE[] table
-									   //always know where next one is
+				i->dispatch = routine[op];
+				i->dispatch(s);
 
-				s->spc+=i->len; //(NOTE) might not be always correct
-				++s->tcp;
+				//TODO probably better to read from a buffer rather than FILE pointer
+				lseek(fd, i->len - 1, SEEK_CUR);
+				++s->icount;
 		}
+
 		return 0;
 }

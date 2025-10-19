@@ -1,8 +1,7 @@
 //TODO maybe instead just forward declare or think like extern variables
 #include "emulator.h"
 
-//TODO check this might not be correct
-#define A  0x7
+//TODO check this might not be correct #define A  0x7
 #define B  0x0
 #define C  0x1
 #define D  0x5
@@ -12,6 +11,9 @@
 #define HL 0x6
 
 typedef sm83_instruction* pInstruction;
+
+#define SM
+
 
 #define sm83(op, r) \
 int sm83##op##r(State *s) { \
