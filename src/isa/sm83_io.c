@@ -1,16 +1,17 @@
+//TODO fix naming
+#include "register.h"
+
 #include "emulator.h"
 #include "sm64_io.h"
 
-//
-//
+//TODO look on table for which register actually are called by some
+//of this functions
+
+//TODO add some flags to specify mode of function in handler functions
+//TODO each isa has a fetch function but a lot share the same
+//TODO maybe same type function
+
 //(NOTE) add here because local to translation unit
-#define A 0x7
-#define B 0x0
-#define C 0x1
-#define D 0x5
-#define E 0x3
-#define H 0x4
-#define L 0x5
 
 //16 bit register codes
 #define HL 0x6 //110
@@ -61,63 +62,79 @@ typedef sm83_cpu Cpu;
  * Add set of functions to interact bw cpu and state
  */
 
-#define LOADINSTRUCTIONS_BEGIN() \
-		ADD_INSTRUCTION_INFO(1, InstructionType.load)
-
-//LD R, R'
-int sm83ldrr(State *s) {
-		//BYTE opcode = s->cpu->ir;  //fist instruction
-		pInstruction *i = NextInstruction();
-
-		//op len type
-		INSTRUCTION_SET_INFO(1, IO);
-		INSTRUCTION_SET_FLAGS(0);
-
-		i->rd = OperandSet(Getr(i->op),  0, direct);
-		i->m  = OperandSet(Getrr(i->op), 0, direct);
-
-		return 0;
+#define sm83ld##rd##m(rd, m) \
+int sm83ld##rd##m(State *s) { \
+    		pInstruction i = NextInstruction(); \
+    		INSTRUCTION_SET_INFO(1, IO); \
+		INSTRUCTION_SET_FLAGS(0); \
+    		i->rd = OperandSet(rd, 0, direct); \
+    		i->m  = OperandSet(m,  0, direct); \
+		return 0;\
 }
 
-//LD r, n
-int sm83ldrn(State *s) {
-		pInstruction *i = NextInstruction();
-
-		//TODO should immediate instruction be 2 bytes long?
-		INSTRUCTION_SET_INFO(2, IO);
-		INSTRUCTION_SET_FLAGS(0);
-
-		//i would need to fetch again here
-		i->rd = OperandSet(Getr(i->op),  0, direct);
-		i->m  = OperandSet(ReadNextByteFromMemory(), 1, immediate);
-
-		return 0;
+#define sm83ldrd(rd) \
+#define sm83ld##rd##m(rd,A) \
+#define sm83ld##rd##m(rd,B) \
+#define sm83ld##rd##m(rd,C) \
+#define sm83ld##rd##m(rd,D) \
+#define sm83ld##rd##m(rd,E) \
+#define sm83ld##rd##m(rd,F) \
+#define sm83ld##rd##m(rd,A) \
+int sm83ld##rdhl(State *s) { \
+    		pInstruction i = NextInstruction(); \
+    		INSTRUCTION_SET_INFO(1, IO); \
+		INSTRUCTION_SET_FLAGS(0); \
+    		i->rd = OperandSet(rd, 0, direct); \
+    		i->m  = OperandSet(HL,  0, indirect); \
+		return 0;\
 }
 
-//LD r, (HL)
-int sm83ldrhl(State *s) {
-		pInstruction *i = NextInstruction();
+#define SM83LD_ALL()
+#define sm83ld(A) \
+#define sm83ld(B) \
+#define sm83ld(C) \
+#define sm83ld(D) \
+#define sm83ld(E) \
+#define sm83ld(F) \
+#define sm83ld(A)
 
-		INSTRUCTION_SET_INFO(1, IO);
-		INSTRUCTION_SET_FLAGS(0);
-
-		i->rd  = OperandSet(Getr(i->op), 0, direct);
-		i->m   = OperandSet(HL, 0, indirect);
-
-		return 0;
+#define sm83ld##rdn(rd) \
+int sm83ld##rdn(State *s) { \
+    		pInstruction i = NextInstruction(); \
+    		INSTRUCTION_SET_INFO(2, IO); \
+    		i->rd = OperandSet(rd, 0, direct); \
+    		i->m  = OperandSet(ReadNextByteFromMemory(),  1, direct); \
+		return 0;\
 }
 
-//LD (hl), r
-int sm83lhlr(State *s) {
-		pInstruction i = NextInstruction();
-		INSTRUCTION_SET_INFO(1, IO);
-		INSTRUCTION_SET_FLAGS(0);
+#define SM83LDN_ALL() \
+sm83ld##rdn(A)\
+sm83ld##rdn(B)\
+sm83ld##rdn(C)\
+sm83ld##rdn(D)\
+sm83ld##rdn(E)\
+sm83ld##rdn(F)\
+sm83ld##rdn(A)\
 
-		i->rd = OperandSet(HL, 0, indirect);
-		i->m  = OperandSet(Getrr(i->op), 0, direct);
+SM83LDN_ALL()
 
-		return 0;
+#define sm83hlm(m)\
+int sm83ldhl##m(State *s) { \
+    		pInstruction i = NextInstruction(); \
+    		INSTRUCTION_SET_INFO(1, IO); \
+    		i->rd = OperandSet(HL, 0, indirect); \
+    		i->m  = OperandSet(m,  1, direct); \
+		return 0;\
 }
+
+#define SM83LDHLM_ALL() \
+sm83ldhl##m(A)\
+sm83ldhl##m(B)\
+sm83ldhl##m(C)\
+sm83ldhl##m(D)\
+sm83ldhl##m(E)\
+sm83ldhl##m(F)\
+sm83ldhl##m(A)
 
 //LD (HL), n
 int sm83lhln (State *s){
@@ -132,31 +149,36 @@ int sm83lhln (State *s){
 		return 0;
 }
 
+
+//TODO chech this more accurately
+#define HL
+#define BC 
+#define DE 
+
 //LD A, (BC)
-int sm83labc (State *s){
-		pInstruction i = NextInstruction();
+//r with 16 bit register
+#define sm83ld(r, rr) \
+int sm83labc (State *s){ \
+		pInstruction i = NextInstruction(); \
+		INSTRUCTION_SET_INFO(1, IO); \
+		i->rd =OperandSet(r, 0, direct); \
+		i->m = OperandSet(rr,0, indirect); \
+		return 0; \
+} \
 
-		INSTRUCTION_SET_INFO(1, IO);
-		INSTRUCTION_SET_FLAGS(0);
+//TODO need to add all of these
+#define sm83ldr(r) \
+#define sm83ld(r, BC) \
+#define sm83ld(r, DE) \
+#define sm83ld(r, CA) \
 
-		i->rd =OperandSet(A, 0, direct);
-		i->m = OperandSet(BC,0, indirect);
-
-		return 0;
-}
-
-//LD A, (DE)
-int sm83lade (State *s){
-		pInstruction i = NextInstruction();
-
-		INSTRUCTION_SET_INFO(1, IO);
-		INSTRUCTION_SET_FLAGS(0);
-
-		i->rd =OperandSet(A, 0, direct);
-		i->m = OperandSet(DE,0, indirect);
-
-		return 0;
-}
+#define SM83LD_16_ALL() \
+sm83ldr(A) \
+sm83ldr(B) \
+sm83ldr(C) \
+sm83ldr(D) \
+sm83ldr(E) \
+sm83ldr(F) \
 
 //index mode
 //LD A, C
@@ -186,135 +208,112 @@ int sm83lca (State *s) {
 		return 0;
 }
 
-//LD A, (n)
-int sm83lan (State *s) {
-		pInstruction i = NextInstruction();
-
-		INSTRUCTION_SET_INFO(2, IO);
-		INSTRUCTION_SETFLAGS(0);
-
-		i->rd = OperandSet(A, direct);
-		i->m  = OperandSet(ReadNextByteFromMemory(), 1,
-				    indexed | indirect);
-
-		return 0;
+//NOTE where n is immediate, find better naming
+//for the moment leave like this
+#define sm83ldrn(rd) \
+int sm83ldrn (State *s) { \
+		pInstruction i = NextInstruction(); \
+		INSTRUCTION_SET_INFO(2, IO); \
+		INSTRUCTION_SETFLAGS(0); \
+		i->rd = OperandSet(rd, 0, index | indirect); \
+		i->m  = OperandSet(LoadNextByteFromMemory(), 1, index | indirect); \
+		return 0; \
 }
 
-//LD (n), A
-int sm83lnina (State *s) {
-		pInstruction i = NextpInstruction();
 
-		ADD_INSTRUCTION_INFO(2, IO);
-		INSTRUCTION_SETFLAGS(0);
+#define sm83ldnm(m) \
+int sm83ldn##m (State *s) { \
+		pInstruction i = NextInstruction(); \
+		INSTRUCTION_SET_INFO(2, IO); \
+		INSTRUCTION_SETFLAGS(0); \
+		i->rd = OperandSet(ReadNextByteFromMemory(), 1, \
+					indexed | indirect); \
+		i->m  = OperandSet(m, 0, direct); \
+		return 0; \
+}
 
-		i->rd = OperandSet(ReadNextByteFromMemory(), 1,
-					indexed | indirect);
-		i->m  = OperandSet(A, 0, direct);
-
-		return 0;
+#define sm83ldrdnn(rd) \
+int sm83ld##rdnn(State *s) { \
+		pInstruction i = NextInstruction(); \
+		INSTRUCTION_SET_INFO(3, IO); \
+		INSTRUCTION_SETFLAGS(0); \
+		i->rd  = OperandSet(rd, 0, direct); \
+		i->m   = OperandSet(ReadNextHWordFromMemory(), 1, indirect)\
+		return 0; \
 }
 
 //TODO little endian?
 //LD A, (nn)
-int sm83lann (State *s) {
-		pInstruction i = NextInstruction();
 
-		ADD_INSTRUCTION_INFO(3, InstructionType.load);
-		INSTRUCTION_SETFLAGS(0);
-
-		i->rd = OperandSet(A,0,index);
-		i->m  = OperandSet(ReadNextHWordFromMemory(), 1, indirect);
-
-		return 0;
+#define sm83ldnnm(m) \
+int sm83ldnn##m(State *s) { \
+		pInstruction i = NextInstruction(); \
+		INSTRUCTION_SET_INFO(3, IO); \
+		INSTRUCTION_SETFLAGS(0); \
+		i->rd  = OperandSet(ReadNextHWordFromMemory(), 1, indirect)\
+		i->m   = OperandSet(m, 0, direct); \
+		return 0; \
 }
 
-//LD (nn), A
-int sm83lnna (State *s) {
-		pInstruction i = NextInstruction();
+#define sm83ldrdhli(rd) { \
+int sm83ldrd##hli(State *s) { \
+		pInstruction i = NextInstruction(); \
+		INSTRUCTION_SET_INFO(3, IO); \
+		INSTRUCTION_SETFLAGS(INC); \
+		i->rd  = OperandSet(rd, 0, direct)\
+		i->m   = OperandSet(HL, 0, indirect); \
+		return 0; \
+}\
 
-		ADD_INSTRUCTION_INFO(3, InstructionType.load);
-		INSTRUCTION_SETFLAGS(0);
+#define sm83ldhlird(m) { \
+int sm83ldhli##m(State *s) { \
+		pInstruction i = NextInstruction(); \
+		INSTRUCTION_SET_INFO(1, IO); \
+		INSTRUCTION_SETFLAGS(INC); \
+		i->rd  = OperandSet(rd, 0, indirect)\
+		i->m   = OperandSet(m, 0, direct); \
+		return 0; \
+}\
 
-		i->rd = OperandSet(ReadNextHWordFromMemory(), 1, indirect);
-		i->m  = OperandSet(A, 0,direct);
+#define sm83ldrdhld(rd) { \
+int sm83ldrd##hld(State *s) { \
+		pInstruction i = NextInstruction(); \
+		INSTRUCTION_SET_INFO(1, IO); \
+		INSTRUCTION_SETFLAGS(DEC); \
+		i->rd  = OperandSet(rd, 0, direct)\
+		i->m   = OperandSet(HL, 0, indirect); \
+		return 0; \
+}\
 
-		return 0;
-}
+#define sm83ldhldm(m) { \
+int sm83ldhld##m(State *s) { \
+		pInstruction i = NextInstruction(); \
+		INSTRUCTION_SET_INFO(1, IO); \
+		INSTRUCTION_SETFLAGS(DEC); \
+		i->rd  = OperandSet(HL, 0, indirect)\
+		i->m   = OperandSet(m, 0, direct); \
+		return 0; \
+}\
 
-// LD A, (HLI)
-int sm83lahli(State *s) {
-		pInstruction i = NextInstruction();
+//ld a16r 
+#define sm83rrm(rr, m) \
+int sm83ld##rr##m(State *s) { \
+		pInstruction i = NextInstruction(); \
+		INSTRUCTION_SET_INFO(1, IO); \
+		INSTRUCTION_SETFLAGS(0); \
+		i->rd  = OperandSet(rr, 0, indirect)\
+		i->m   = OperandSet(m, 0, direct); \
+		return 0; \
+}\
 
-		ADD_INSTRUCTION_INFO(1, InstructionType.load);
-		INSTRUCTION_SETFLAGS(INC_M);
-
-		i->rd = OperandSet(A,  0, direct);
-		i->m  = OperandSet(HL, 0, indirect);
-
-		return 0;
-}
-
-// LD (HLI), A
-int sm83lhlia(State *s) {
-		pInstruction i = NextInstruction();
-
-		ADD_INSTRUCTION_INFO(1, InstructionType.load);
-		INSTRUCTION_SETFLAGS(INC_RD);
-
-		i->rd= OperandSet(HL, 0, indirect);
-		i->m = OperandSet(A,  0, direct);
-
-		return 0;
-}
-// LD a, (HLD)
-int sm83lahld(State *s) {
-		pInstruction i = NextInstruction();
-
-		ADD_INSTRUCTION_INFO(1, InstructionType.load);
-		INSTRUCTION_SETFLAGS(DEC_M);
-
-		i->rd= OperandSet(A,0, direct);
-		i->m = OperandSet(HL, 0, indirect);
-
-		return 0;
-}
-
-// LD (HLD), A
-int sm83lhlda (State *s){
-		pInstruction i = NextInstruction();
-
-		ADD_INSTRUCTION_INFO(1, InstructionType.load);
-		INSTRUCTION_SETFLAGS(DEC_RD);
-
-		i->rd= OperandSet(HL, 0, indirect);
-		i->m = OperandSet(A, 0,  direct);
-
-		return 0;
-}
-
-int sm83lbca (State *s) {
-		pInstruction i = NextInstruction();
-
-		ADD_INSTRUCTION_INFO(1, load);
-		INSTRUCTION_SETFLAGS(0);
-
-		i->rd = OperandSet(rBC, 0, indirect);
-		i->m =  OperandSet(A, 0, indirect);
-
-		return 0;
-}
-
-int sm83ldea (State *s) {
-		pInstruction i = NextInstruction();
-
-		ADD_INSTRUCTION_INFO(1, load);
-		INSTRUCTION_SETFLAGS(0);
-
-		i->rd = OperandSet(rDE, 0, indirect);
-		i->m =  OperandSet(A, 0, indirect);
-
-		return 0;
-}
+#define sm83rr(rr) \
+sm83rrm(rr, m) \
+sm83rrm(rr, m) \
+sm83rrm(rr, m) \
+sm83rrm(rr, m) \
+sm83rrm(rr, m) \
+sm83rrm(rr, m) \
+sm83rrm(rr, m)
 
 // =======16b io instructions==============
 
@@ -330,21 +329,20 @@ int sm83ldea (State *s) {
 #define SP_16 3
 
 
-// Low address first
-//LD dd, nn
-int sm83lddnn (State *s) {
-		pInstruction i = NextInstruction();
+#define sm83ldrrnn(rr) \
+int sm83ld##rr(State *s) { \
+		pInstruction i = NextInstruction(); \
+		INSTRUCTION_SET_INFO(3, IO); \
+		INSTRUCTION_SETFLAGS(0); \
+		i->rd  = OperandSet(rr, 0, direct)\
+		i->m   = OperandSet(ReadNextHWordFromMemory(), 1, direct); \
+		return 0; \
+}\
 
-		ADD_INSTRUCTION_INFO(3, IO_16);
-		INSTRUCTION_SETFLAGS(0);
 
-		i->rd = OperandSet(Getdd(i->op),  0, direct);
-		i->m =  OperandSet(ReadNextHWordFromMemory(), 1, direct);
+//TODO rewrite in case other rr registe might be used,
+//not specified not sure
 
-		return 0;
-}
-
-//TODO important stack operation
 //LD SP, HL
 int sm83lsphl (State *s) {
 		pInstruction i = NextInstruction();
@@ -358,30 +356,56 @@ int sm83lsphl (State *s) {
 		return 0;
 }
 
-int sm83pushqq (State *s) {
+#define sm83ldpush(qq) \
+int sm83ldpush##qq(State *s) { \
+		pInstruction i = NextInstruction(); \
+		INSTRUCTION_SET_INFO(1, IO); \
+		INSTRUCTION_SETFLAGS(0); \
+		i->rd  = OperandSet(qq, 0, direct)\
+		return 0; \
+}\
+
+#define SM83LDPUSH_ALL()\
+sm83ldpush(qq) \
+sm83ldpush(qq) \
+sm83ldpush(qq) \
+sm83ldpush(qq)
+
+#define sm83ldpop(qq) \
+int sm83ldpop##qq(State *s) { \
+		pInstruction i = NextInstruction(); \
+		INSTRUCTION_SET_INFO(1, IO); \
+		INSTRUCTION_SETFLAGS(0); \
+		i->rd  = OperandSet(qq, 0, direct)\
+		return 0; \
+}\
+
+#define SM83LDPOP_ALL() \
+sm83ldpop(qq) \
+sm83ldpop(qq) \
+sm83ldpop(qq) \
+sm83ldpop(qq)
+
+#define SM83_OP_ALL() \
+#define SM83LDPUSH_ALL()\
+#define SM83LDPOP_ALL() \
+
+SM83_OP_ALL()
+   
+int sm83ldhlspe (State *s) {
 		pInstruction i = NextInstruction();
 
-		ADD_INSTRUCTION_INFO(1, IO_16);
-		INSTRUCTION_SETFLAGS(PUSH);
+		ADD_INSTRUCTION_INFO(2, IO_16);
+		INSTRUCTION_SETFLAGS(LDHL); //TODO flag because signed
 
-		i->rd = OperandSet(Getdd(i->op), 0, direct);
-
-		return 0;
-}
-
-int sm83popqq (State *s) {
-		pInstruction i = NextInstruction();
-
-		ADD_INSTRUCTION_INFO(1, IO_16);
-		INSTRUCTION_SETFLAGS(POP);
-
-		i->rd = OperandSet(Getdd(i->op), 0, direct);
+		i->rd = OperandSet(HL_16, 0, direct);
+		i->m =  OperandSet(ReadNextByteFromMemory(), 1, direct);
 
 		return 0;
 }
 
 //LDHL SP, e
-int sm83lhlspe (State *s) {
+int sm83ldhlspe (State *s) {
 		pInstruction i = NextInstruction();
 
 		ADD_INSTRUCTION_INFO(2, IO_16);
@@ -394,9 +418,8 @@ int sm83lhlspe (State *s) {
 }
 //LD (nn), SP
 //(NOTE) isnt this just two load instructions to nn and nn+1?
-int sm83lnnsp (State *s) {
+int sm83ldnnsp (State *s) {
 		pInstruction i = NextInstruction();
-
 		ADD_INSTRUCTION_INFO(3, IO_16);
 		INSTRUCTION_SETFLAGS(0);
 
